@@ -30,7 +30,7 @@ angular.module('perfect_scrollbar', []).directive('perfectScrollbar',
       }
 
       $scope.$evalAsync(function() {
-        Ps.initialize($elem, options);
+        PerfectScrollbar.initialize($elem, options);
         var onScrollHandler = $parse($attr.onScroll)
         $elem.scroll(function(){
           var scrollTop = $elem.scrollTop()
@@ -51,7 +51,7 @@ angular.module('perfect_scrollbar', []).directive('perfectScrollbar',
               $($elem).scrollTop($($elem).prop("scrollHeight"));
             }, 100);
           }
-          Ps.update($elem);
+          PerfectScrollbar.update($elem);
         });
       }
 
@@ -72,7 +72,7 @@ angular.module('perfect_scrollbar', []).directive('perfectScrollbar',
 
       $elem.bind('$destroy', function() {
         jqWindow.off('resize', update);
-        Ps.destroy($elem);
+        PerfectScrollbar.destroy($elem);
       });
 
     }
