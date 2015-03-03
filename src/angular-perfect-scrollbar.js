@@ -1,5 +1,10 @@
 var Ps = require('perfect-scrollbar');
 
+// Check we have velocity and the UI pack
+  if (typeof PerfectScrollbar === undefined) {
+    throw "PerfectScrollbar plugin required, please include the relevant JS files. Get PerfectScrollbar with: bower install perfect-scrollbar";
+  }
+
 angular.module('perfect_scrollbar', []).directive('perfectScrollbar',
   ['$parse', '$window', function($parse, $window) {
   var psOptions = [
