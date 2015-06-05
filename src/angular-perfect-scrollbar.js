@@ -1,84 +1,68 @@
-(function () {
-  'use strict';
+(function() {
+	"use strict";
 
-  // Check we have velocity and the UI pack
-  if (typeof PerfectScrollbar === undefined) {
-    throw "PerfectScrollbar plugin required, please include the relevant JS files. Get PerfectScrollbar with: bower install perfect-scrollbar";
-  }
+	// Check we have PerfectScrollbar
+	if (typeof PerfectScrollbar === undefined) {
+		throw "PerfectScrollbar plugin required, please include the relevant JS files. Get PerfectScrollbar with: bower install perfect-scrollbar";
+	}
 
-  angular.module('directives.perfectScrollbar', []).directive('perfectScrollbar',
-  [
-    '$parse', '$window', function ($parse, $window) {
-      var psOptions = [
-        'wheelSpeed', 'wheelPropagation', 'minScrollbarLength', 'useBothWheelAxes',
-        'useKeyboard', 'suppressScrollX', 'suppressScrollY', 'scrollXMarginOffset',
-        'scrollYMarginOffset', 'includePadding' //, 'onScroll', 'scrollDown'
-      ];
+	angular.module("directives.perfectScrollbar", []).directive("perfectScrollbar",
+	[
+		"$parse", "$window", function($parse, $window) {
+			var psOptions = [
+				"wheelSpeed",
+				"wheelPropagation",
+				"swipePropagation",
+				"minScrollbarLength",
+				"maxScrollbarLength",
+				"useBothWheelAxes",
+				"useKeyboard",
+				"suppressScrollX",
+				"suppressScrollY",
+				"scrollXMarginOffset",
+				"scrollYMarginOffset"
+			];
 
-      return {
-        restrict: 'EA',
-        transclude: true,
-        template: '<div><div ng-transclude></div></div>',
-        replace: true,
-        link: function ($scope, $elem, $attr) {
-          var elem = $elem[0];
-          var jqWindow = angular.element($window);
-          var options = {};
+			return {
+				restrict: "EA",
+				link: function ($scope, $elem, $attr) {
+					var elem = $elem[0];
+					var jqWindow = angular.element($window);
+					var options = {};
+					
+					for (var i = 0, l = psOptions.length; i < l; i++) {
+						var opt = psOptions[i];
+						var attrOpt = Object.keys($attr).filter(function(attr) {
+							return attr.toLowerCase().indexOf(opt.toLowerCase()) > -1;
+						})[0];
+						if (attrOpt)
+							options[opt] = $parse($attr[attrOpt])();
+						
+					}
 
-          for (var i = 0, l = psOptions.length; i < l; i++) {
-            var opt = psOptions[i];
-            if ($attr[opt] !== undefined) {
-              options[opt] = $parse($attr[opt])();
-            }
-          }
+					var isPsInit = false;
+					setTimeout(psInit, 5);
+					function psInit() {
+						$scope.$evalAsync(function () {
+							PerfectScrollbar.initialize(elem, options);
+							isPsInit = true;
+						});
+					}
 
-          $scope.$evalAsync(function () {
-            PerfectScrollbar.initialize(elem, options);
-            var onScrollHandler = $parse($attr.onScroll);
-            //$elem.scroll(function () {
-            //  var scrollTop = $elem.scrollTop()
-            //  var scrollHeight = $elem.prop('scrollHeight') - $elem.height()
-            //  $scope.$apply(function () {
-            //    onScrollHandler($scope, {
-            //      scrollTop: scrollTop,
-            //      scrollHeight: scrollHeight
-            //    })
-            //  })
-            //});
-          });
+					$scope.$watch($attr.psUpdate, update);
+					function update() {
+						if (isPsInit)
+							$scope.$evalAsync(function () {
+								PerfectScrollbar.update(elem, options);
+							});
+					}
 
-          function update(event) {
-            $scope.$evalAsync(function () {
-              //if ($attr.scrollDown == 'true' && event != 'mouseenter') {
-              //  setTimeout(function () {
-              //    $($elem).scrollTop($($elem).prop("scrollHeight"));
-              //  }, 100);
-              //}
-              //PerfectScrollbar.update(elem);
-            });
-          }
-
-          // This is necessary when you don't watch anything with the scrollbar
-          //$elem.bind('mouseenter', update('mouseenter'));
-
-          // Possible future improvement - check the type here and use the appropriate watch for non-arrays
-          if ($attr.refreshOnChange) {
-            $scope.$watchCollection($attr.refreshOnChange, function () {
-              update();
-            });
-          }
-
-          // this is from a pull request - I am not totally sure what the original issue is but seems harmless
-          if ($attr.refreshOnResize) {
-            jqWindow.on('resize', update);
-          }
-
-          $elem.bind('$destroy', function () {
-            jqWindow.off('resize', update);
-            PerfectScrollbar.destroy(elem);
-          });
-        }
-      };
-    }
-  ]);
+					$elem.bind("$destroy", function() {
+						jqWindow.off("resize", update);
+						PerfectScrollbar.destroy(elem);
+					});
+				}
+			};
+		}
+	]);
 })();
