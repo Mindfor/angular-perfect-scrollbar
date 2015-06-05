@@ -1,4 +1,4 @@
-(function() {
+(function () {
 	"use strict";
 
 	// Check we have PerfectScrollbar
@@ -8,7 +8,7 @@
 
 	angular.module("directives.perfectScrollbar", []).directive("perfectScrollbar",
 	[
-		"$parse", "$window", function($parse, $window) {
+		"$parse", "$window", function ($parse, $window) {
 			var psOptions = [
 				"wheelSpeed",
 				"wheelPropagation",
@@ -29,15 +29,12 @@
 					var elem = $elem[0];
 					var jqWindow = angular.element($window);
 					var options = {};
-					
+
 					for (var i = 0, l = psOptions.length; i < l; i++) {
 						var opt = psOptions[i];
-						var attrOpt = Object.keys($attr).filter(function(attr) {
-							return attr.toLowerCase().indexOf(opt.toLowerCase()) > -1;
-						})[0];
+						var attrOpt = Object.keys($attr).filter(function (attr) { return attr.toLowerCase().indexOf(opt.toLowerCase()) > -1;})[0];
 						if (attrOpt)
 							options[opt] = $parse($attr[attrOpt])();
-						
 					}
 
 					var isPsInit = false;
@@ -49,7 +46,13 @@
 						});
 					}
 
-					$scope.$watch($attr.psUpdate, update);
+					setWatcherOnPsUpdate();
+					function setWatcherOnPsUpdate() {
+						var evaledUpdateExp = $scope.$eval($attr.psUpdate);
+						if (angular.isFunction(evaledUpdateExp))
+							return;
+						$scope.$watch($attr.psUpdate, update);
+					}
 					function update() {
 						if (isPsInit)
 							$scope.$evalAsync(function () {
@@ -57,7 +60,7 @@
 							});
 					}
 
-					$elem.bind("$destroy", function() {
+					$elem.bind("$destroy", function () {
 						jqWindow.off("resize", update);
 						PerfectScrollbar.destroy(elem);
 					});
