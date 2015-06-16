@@ -8,7 +8,7 @@
 
 	angular.module("directives.perfectScrollbar", []).directive("perfectScrollbar",
 	[
-		"$parse", "$window", function ($parse, $window) {
+		"$parse", "$window", "$timeout", function ($parse, $window, $timeout) {
 			var psOptions = [
 				"wheelSpeed",
 				"wheelPropagation",
@@ -38,7 +38,7 @@
 					}
 
 					var isPsInit = false;
-					setTimeout(psInit, 5);
+					$timeout(psInit, 5, false);
 					function psInit() {
 						$scope.$evalAsync(function () {
 							PerfectScrollbar.initialize(elem, options);
@@ -59,6 +59,9 @@
 								PerfectScrollbar.update(elem, options);
 							});
 					}
+
+					$scope.$on("psUpdateTrigger", update);
+					jqWindow.on("resize", update);
 
 					$elem.bind("$destroy", function () {
 						jqWindow.off("resize", update);
