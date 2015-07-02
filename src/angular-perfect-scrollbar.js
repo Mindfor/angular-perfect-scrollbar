@@ -6,10 +6,9 @@
 		throw "PerfectScrollbar plugin required, please include the relevant JS files. Get PerfectScrollbar with: bower install perfect-scrollbar";
 	}
 
-	angular.module("directives.perfectScrollbar", []).directive("perfectScrollbar",
-	[
-		"$parse", "$window", "$timeout", function ($parse, $window, $timeout) {
-			var psOptions = [
+	angular.module("directives.perfectScrollbar", []).directive("perfectScrollbar", ["$window", "$timeout",
+		function ($window, $timeout) {
+			var perfectScrollbarOptions = [
 				"wheelSpeed",
 				"wheelPropagation",
 				"swipePropagation",
@@ -22,53 +21,67 @@
 				"scrollXMarginOffset",
 				"scrollYMarginOffset"
 			];
-
+			var directiveOptions = [
+				"disabled"
+			];
 			return {
 				restrict: "EA",
-				link: function ($scope, $elem, $attr) {
+				link: function (scope, $elem, $attrs) {
 					var elem = $elem[0];
-					var jqWindow = angular.element($window);
-					var options = {};
+					var jlWindow = angular.element($window);
+					var psOptions = evaluteOptions(perfectScrollbarOptions, $attrs);
+					var dirOptions = evaluteOptions(directiveOptions, $attrs);
 
-					for (var i = 0, l = psOptions.length; i < l; i++) {
-						var opt = psOptions[i];
-						var attrOpt = Object.keys($attr).filter(function (attr) { return attr.toLowerCase().indexOf(opt.toLowerCase()) > -1;})[0];
-						if (attrOpt)
-							options[opt] = $parse($attr[attrOpt])();
-					}
+					if (dirOptions.disabled)
+						return;
 
-					var isPsInit = false;
-					$timeout(psInit, 5, false);
-					function psInit() {
-						$scope.$evalAsync(function () {
-							PerfectScrollbar.initialize(elem, options);
-							isPsInit = true;
+					var isPsInited = false;
+					$timeout(initializePerfectScrollbar, 5, false);
+
+					function initializePerfectScrollbar() {
+						scope.$evalAsync(function () {
+							PerfectScrollbar.initialize(elem, psOptions);
+							isPsInited = true;
 						});
 					}
 
-					setWatcherOnPsUpdate();
-					function setWatcherOnPsUpdate() {
-						var evaledUpdateExp = $scope.$eval($attr.psUpdate);
-						if (angular.isFunction(evaledUpdateExp))
-							return;
-						$scope.$watch($attr.psUpdate, update);
-					}
+					$attrs.psDisabled && scope.$watch($attrs.psDisabled, disable);
+					$attrs.psUpdate && scope.$watch($attrs.psUpdate, update);
+
+					scope.$on("psUpdateTrigger", update);
+					jlWindow.on("resize", update);
+
 					function update() {
-						if (isPsInit)
-							$scope.$evalAsync(function () {
-								PerfectScrollbar.update(elem, options);
+						if (isPsInited)
+							scope.$evalAsync(function () {
+								PerfectScrollbar.update(elem, psOptions);
 							});
 					}
-
-					$scope.$on("psUpdateTrigger", update);
-					jqWindow.on("resize", update);
-
-					$elem.bind("$destroy", function () {
-						jqWindow.off("resize", update);
+					
+					function disable() {
+						jlWindow.off("resize", update);
 						PerfectScrollbar.destroy(elem);
-					});
+					}
+
+					scope.$on("$destroy", disable);
+
+					function evaluteOptions(matchOptions, $attrs) {
+						var parsedOpts = {};
+						for (var i = 0, l = matchOptions.length; i < l; i++) {
+							var opt = matchOptions[i];
+							var attrOpt = Object.keys($attrs).filter(function (attr) {
+								return attr.toLowerCase().indexOf(opt.toLowerCase()) > -1;
+							})[0];
+							if (attrOpt)
+								parsedOpts[opt] = scope.$eval($attrs[attrOpt]);
+						}
+						return parsedOpts;
+					}
 				}
+
 			};
+			
+		
 		}
 	]);
 })();
