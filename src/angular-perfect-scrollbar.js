@@ -60,8 +60,9 @@
 					
 					function disable() {
 						jlWindow.off("resize", update);
-						PerfectScrollbar.destroy(elem);
-					}
+						if(isPsInited)
+                            PerfectScrollbar.destroy(elem);
+                	}
 
 					scope.$on("$destroy", disable);
 
